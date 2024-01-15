@@ -8,8 +8,6 @@ end
 
 function attach_node_left(meas::Vector{operators}, idx, mat, nod)
     length(meas) == 0 && return nothing
-    #println(typeof(meas[1].proj[1]))
-    #println(typeof(mat))
     node = node_operator(meas[1], idx, mat, nod, 1)
     node.left = attach_node_left(meas[2:end], node.idx, node.value.mat, node)
     node.right = attach_node_right(meas[2:end], node.idx, node.value.mat, node)
@@ -26,7 +24,6 @@ end
 
 function node_operator(measure::measure, idx, mat, nod, branch)
     A = measure.proj[branch]*mat*measure.proj[branch]
-    #println(A)
     pA = tr(A)
     if pA == 0
         node = Binary_tree(idx*2+(branch-1), nod, density_prob(pA, zero(A), 0), nothing, nothing)
@@ -52,14 +49,6 @@ function trimming!(root)
     if root === nothing
         return
     end
-    #=
-    if root.value.prob == 0
-        root.value = density_prob(0, zero(root.value.mat), 0)
-        root.left = nothing
-        root.right = nothing
-        return
-    end
-    =#
     if root.left === nothing && root.right === nothing
         return
     end
@@ -107,25 +96,6 @@ function find_leaves(node)
     return [find_leaves(node.left); find_leaves(node.right)]
 end
 
-#=
-function make_tree(root::TreeNode)
-    A = []
-    i=0
-    while true
-        i += 1
-        J = find_node(root, i)
-        if J === nothing
-            push!(A, J)
-        else
-            push!(A,J)
-            if J.left === nothing && J.right === nothing
-                break
-            end
-        end
-    end
-    return Tree(A)
-end
-=#
 function make_tree(root)
     if root === nothing
         return []

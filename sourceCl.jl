@@ -1,16 +1,11 @@
 function p(x, y, X, Y, Ker::Kernels)
     A = [collect(x);collect(y)]
-    #println(A)
-    #println(Y)
     isempty(Y) && return kernel(A, [i[1:length(x)] for i in X], Ker)
     B = [[i[1:length(x)];j[1:length(y)]] for (i,j) in zip(X,Y)]
     #I give to the kernel A which is the vector with the X and Y value of timeseries i want to know the probability of (1 x k + l)
     #and B wich is the vector of vectors of all realization of time series
     return kernel(A, B, Ker)
 end
-
-
-
 
 function kernel(A, B, x::Frequency)
     count = 0
@@ -25,7 +20,6 @@ function single_sum(x, y, X, Y,Ker::Kernels)
     #x and y are the values of the time series for which i am summing on that goes from t+1 to t-k for x and t to t-l for y
     #X and Y are the vectors of all the time series
     Full_dist = p(x, y, X, Y, Ker)
-    #println(Full_dist)
     Full_dist == 0 && return 0.0
     a = p(x[1:end], y[2:end], X, Y, Ker)
     b = p(x[1:end-1], y[2:end], X, Y, Ker)
@@ -33,38 +27,6 @@ function single_sum(x, y, X, Y,Ker::Kernels)
     A = a*c/b
     return Full_dist*log2(Full_dist/A)
 end
-
-#TE from Y -> X, J -> I
-#=function TE(t, k, l ,Time_series::Time_Series, Ker::Kernels; Progress = true)
-    #collect iterator creates a vector in wich the last index is the one changing x(t+1)
-    A = collect(Iterators.product(Time_series.x[t-k-1:t]...))
-    B = collect(Iterators.product(Time_series.y[t-l-1:t-1]...))
-    I = [i[t-k-1:t] for i in Time_series.X]
-    J = [j[t-l-1:t-1] for j in Time_series.Y]
-    #just to count time
-    time = length(A)
-    count = 0
-    timestep = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-    sum = 0.0
-    #I cycle elements starting varying the first index. i.e. the x (t-k)
-    for a in A
-        p1 = p(a, [], I, [], Ker)
-        p2 = p(a[1:end-1], [], I, [], Ker)
-        for b in B
-            sum += single_sum(a, b, I, J, p1, p2, Ker)
-            #println(sum)
-        end
-        
-        count += 1
-        if !isempty(timestep) && Progress
-            count/time > timestep[1] && (print(" ", timestep[1]);popfirst!(timestep))
-        end
-    
-    end
-    return TE(k, l, Time_series.n, sum, t, Time_series.Dynamic, Ker)
-end
-=#
-
 
 function full_prob_dist(t, k, l ,Time_series::Time_Series, Ker::Kernels; Progress = true)
     A = collect(Iterators.product(Time_series.x[t-k:t]...))
@@ -133,23 +95,9 @@ function fast_TE(t, k, l ,Time_series::Time_Series, Ker::Kernels)
     return TE(k, l, Time_series.n, sum, t, Time_series.Dynamic, Ker, M)
 end
 
-#=
-function Time_Series(f, g, n, x0, y0, c)
-    #f and g are the functions that define the time series
-    #n is the number of time steps
-    x = [x0]
-    y = [y0]
-    for i in 1:n
-        push!(x, f(x, y, c))
-        push!(y, g(x, y))
-    end
-    return x, y
-end
-=#
 function Time_series(Dynamic, n, Time)
     #Dynamic is the struct that define the time series
     #n is the number of time steps
-
     if length(Dynamic.x) == Time
         x = Dynamic.x
     else
@@ -169,18 +117,15 @@ function Time_series(Dynamic, n, Time)
         Y[j] = zeros(Float64, Time)
         X[j][1] = Dynamic.x0(Dynamic.x)
         Y[j][1] = Dynamic.y0(Dynamic.y)
-        #println(X[j][1], " ", Y[j][1])
         for i in 2:Time
             X[j][i] = Dynamic.f(X[j][1:i-1], Y[j][1:i-1], Dynamic.a...)
-            #println(Dynamic.f(X[j][1:i-1], Y[j][1:i-1], Dynamic.a...), " ", X[j][1:i-1], " ", Y[j][i-1], " ", Dynamic.a)
             Y[j][i] = Dynamic.g(X[j][1:i-1], Y[j][1:i-1], Dynamic.b...)
-            #println(Dynamic.g(X[j][1:end-1], Y[j][end-1], Dynamic.b...))
         end
     end
     return Time_Series(n, x, y, X, Y, Dynamic)
 end
 
-#inizialization functions
+#inizialization function
 
 function init_rand(c)
     return rand(c[1])
@@ -206,9 +151,6 @@ function full_prob_k(full, K, k, L, l,xdim,ydim)
     kfull = [1:xdim for i in 1:k+1]
     Lfull = [1:ydim for i in 1:L]
     lfull = [1:ydim for i in 1:l]
-    #onek = [1 for i in kdiff]
-    #onel = [1 for i in ldiff]
-    #println(kcycle)
     if kdiff == 0
         A = full
     else

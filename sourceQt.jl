@@ -34,66 +34,6 @@ function pauli_operator(matrix,base)
     return pauli_operator(matrix, base, eve, evals)
 end
 
-#=function two_qubit_simulation_tree(state, measurements, channel)
-    ρ_in = density_matrix(state)
-    root = create_tree(measurements[1:2], ρ_in)
-    leaves = find_leaves(root)
-    for leaf in leaves
-        ρ_out = density_matrix(channel.mat*leaf.value.mat*adjoint(channel.mat), ρ_in.base)
-        attach_node!(root, create_tree(measurements[3:4], ρ_out, start = leaf.idx, parent = leaf.parent, prob=leaf.value.prob, res=leaf.value.result))
-    end
-    return root
-end
-=#
-
-#=to re-tink
-function measures(root::TreeNode, A)
-    if root.left === nothing && root.right === nothing
-        return
-    end
-    if root.value.result == 0
-        return
-    end
-    rand() < root.left.value.prob ? (push!(A, root.left.value.result), measures(root.left, A)) : (push!(A, root.right.value.result), measures(root.right, A))
-end
-
-
-function measures(root::TreeNode, A)
-    if root.left === nothing && root.right === nothing
-        return
-    end
-    if root.left === nothing && root.right !== nothing
-        if root.right.value.result == 0
-            measures(root.right, A)
-        else
-            push!(A, root.right.value.result)
-            measures(root.right, A)
-        end
-        return
-    end
-    if root.right === nothing && root.left !== nothing
-        if root.left.value.result == 0
-            measures(root.left, A)
-            return
-        else
-            push!(A, root.left.value.result)
-            measures(root.left, A)
-            return
-        end
-        return
-    end
-    if root.left.value.result == 0
-        measures(root.left, A)
-        return
-    end
-    if root.right.value.result == 0
-        measures(root.right, A)
-        return
-    end
-    rand() < root.left.value.prob ? (push!(A, root.left.value.result), measures(root.left, A)) : (push!(A, root.right.value.result), measures(root.right, A))
-end
-=#
-
 function measures(root::TreeNode)
     if root.left === nothing && root.right === nothing
         return []
@@ -134,8 +74,6 @@ function simulation(Qt::QT_Dynamical_model, n)
         G = measures(root)
         A[i] = [G[1], G[3]]
         B[i] = [G[2], G[4]]
-        #push!(A, [G[1], G[3]])
-        #push!(B,[G[2], G[4]])
     end
     return A, B
 end
