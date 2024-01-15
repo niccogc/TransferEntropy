@@ -4,7 +4,7 @@ function density_matrix(state::state_vector)
     return density_matrix(state.vec*state.vec', state.base)
 end
 
-function pauli_measure(op::pauli_operator, qubit::Int64, nqubit::Int64)
+function measure(op::operators, qubit::Int64, nqubit::Int64)
     A = op.evec[1]*op.evec[1]'
     B = op.evec[2]*op.evec[2]'
     X = 1
@@ -18,7 +18,19 @@ function pauli_measure(op::pauli_operator, qubit::Int64, nqubit::Int64)
             Y = kron(Y, Matrix(I, 2, 2))
         end
     end
-    return pauli_measure([X, Y], op.base, op.eval)
+    return measure([X, Y], op.base, op.eval)
+end
+
+function operator(matrix, base)
+    evals, evecs = eigen(matrix)
+    eve = [evecs[i,:] for i in 1:size(evecs)[1]]
+    return operator(matrix, base, eve, evals)
+end
+
+function pauli_operator(matrix,base)
+    evals, evecs = eigen(matrix)
+    eve = [evecs[i,:] for i in 1:size(evecs)[1]]
+    return pauli_operator(matrix, base, eve, evals)
 end
 
 #=function two_qubit_simulation_tree(state, measurements, channel)
@@ -43,19 +55,72 @@ function measures(root::TreeNode, A)
     end
     rand() < root.left.value.prob ? (push!(A, root.left.value.result), measures(root.left, A)) : (push!(A, root.right.value.result), measures(root.right, A))
 end
-=#
+
 
 function measures(root::TreeNode, A)
     if root.left === nothing && root.right === nothing
         return
     end
+    if root.left === nothing && root.right !== nothing
+        if root.right.value.result == 0
+            measures(root.right, A)
+        else
+            push!(A, root.right.value.result)
+            measures(root.right, A)
+        end
+        return
+    end
+    if root.right === nothing && root.left !== nothing
+        if root.left.value.result == 0
+            measures(root.left, A)
+            return
+        else
+            push!(A, root.left.value.result)
+            measures(root.left, A)
+            return
+        end
+        return
+    end
     if root.left.value.result == 0
         measures(root.left, A)
+        return
     end
     if root.right.value.result == 0
         measures(root.right, A)
+        return
     end
     rand() < root.left.value.prob ? (push!(A, root.left.value.result), measures(root.left, A)) : (push!(A, root.right.value.result), measures(root.right, A))
+end
+=#
+
+function measures(root::TreeNode)
+    if root.left === nothing && root.right === nothing
+        return []
+    end
+    if root.left === nothing && root.right !== nothing
+        if root.right.value.result == 0
+            return [measures(root.right)...]
+        else
+            return [root.right.value.result; measures(root.right)...]
+        end
+        return
+    end
+    if root.right === nothing && root.left !== nothing
+        if root.left.value.result == 0
+            
+            return [measures(root.left)...]
+        else
+            return [root.left.value.result; measures(root.left)...]
+        end
+    end
+    if root.left.value.result == 0
+        
+        return [measures(root.left)...]
+    end
+    if root.right.value.result == 0
+        return [measures(root.right)...]
+    end
+    rand() < root.left.value.prob ? (return[root.left.value.result; measures(root.left)...]) : (return[root.right.value.result; measures(root.right)...])
 end
 
 function simulation(Qt::QT_Dynamical_model, n)
@@ -64,8 +129,7 @@ function simulation(Qt::QT_Dynamical_model, n)
     A = Vector{Vector{Int64}}(undef, n)
     B = Vector{Vector{Int64}}(undef, n)
     for i in 1:n
-        G = []
-        measures(root, G)
+        G = measures(root)
         A[i] = [G[1], G[3]]
         B[i] = [G[2], G[4]]
         #push!(A, [G[1], G[3]])
@@ -74,16 +138,25 @@ function simulation(Qt::QT_Dynamical_model, n)
     return A, B
 end
 
-σx = pauli_operator([0 1; 1 0], 1, "Z", [[1; 1]./sqrt(2), [-1; 1]./sqrt(2)], [1; -1])
-σy = pauli_operator([0 -im; im 0], 2, "Z", [[-im; 1]./sqrt(2), [1;-im]./sqrt(2)], [1; -1])
-σz = pauli_operator([1 0; 0 -1], 3, "Z", [[1; 0], [0; 1]], [1; -1])
-Id = pauli_operator(Matrix(I, 2, 2), 0, "Z", [[1; 0], [0; 1]], [1]);
+function rot(rotated::operators,rotator::pauli_operator, θ)
+    A = (cos(θ/2)*Matrix(I, 2, 2) - im*sin(θ/2)*rotator.mat)*rotated.mat*(cos(θ/2)*Matrix(I, 2, 2) + im*sin(θ/2)*rotator.mat)
+    A[abs.(A) .< 1e-10] .= 0
+    return A
+end
+
+
+σx = pauli_operator([0 1; 1 0], "Z")
+σy = pauli_operator([0 -im; im 0], "Z")
+σz = pauli_operator([1 0; 0 -1], "Z")
+Id = pauli_operator(Matrix(I, 2, 2), "Z")
+
 qubit = [1, 2]
 nqubit = length(qubit)
-Mx = [pauli_measure(σx, i, nqubit) for i in qubit]
-My = [pauli_measure(σy, i, nqubit) for i in qubit]
-Mz = [pauli_measure(σz, i, nqubit) for i in qubit]
-MId = [pauli_measure(Id, i, nqubit) for i in qubit];
+
+Mx = [measure(σx, i, nqubit) for i in qubit]
+My = [measure(σy, i, nqubit) for i in qubit]
+Mz = [measure(σz, i, nqubit) for i in qubit]
+MId = [measure(Id, i, nqubit) for i in qubit];
 
 
 # Define quantum gates for 2-qubit systems

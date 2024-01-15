@@ -4,7 +4,7 @@ Freq = Frequency()
 abstract type Dynamical_models end
 struct Dyn_mod <: Dynamical_models end
 Dyn = Dyn_mod()
-
+abstract type TreeNode end
 #f and g are the functions that evolve system x and y, a and b are the parameters of the system, x0 and y0 are the initial conditions
 struct Dynamical_model <: Dynamical_models
     x::Vector{Vector{Float64}}
@@ -50,7 +50,6 @@ end
 
 struct pauli_operator <: operators
     mat::Matrix{ComplexF64}
-    n::Int64
     base::String
     evec::Vector{Vector{ComplexF64}}
     eval::Vector{ComplexF64}
@@ -61,12 +60,18 @@ struct channel <: operators
     base::String
 end
 
-struct pauli_measure <: operators
+struct measure <: operators
     proj::Vector{Matrix{ComplexF64}}
     base::String
     value::Vector{Int64}
 end
 
+struct operator <: operators
+    mat::Matrix{ComplexF64}
+    base::String
+    evec::Vector{Vector{ComplexF64}}
+    eval::Vector{ComplexF64}
+end
 struct state_vector
     vec::Vector{ComplexF64}
     base::String
@@ -84,7 +89,7 @@ struct density_matrix <: operators
     base::String
 end
 
-mutable struct TreeNode
+mutable struct Binary_tree <: TreeNode
     idx::Int64
     parent::Union{TreeNode, Nothing}
     value::density_prob
