@@ -23,8 +23,9 @@ end
 
 function operator(matrix, base)
     evals, evecs = eigen(matrix)
+    eva = round.(evals)
     eve = [evecs[i,:] for i in 1:size(evecs)[1]]
-    return operator(matrix, base, eve, evals)
+    return operator(matrix, base, eve, eva)
 end
 
 function pauli_operator(matrix,base)
@@ -126,8 +127,9 @@ end
 function simulation(Qt::QT_Dynamical_model, n)
     ρ_in = density_matrix(Qt.state)
     root = create_tree(Qt.operators, ρ_in)
-    A = Vector{Vector{Int64}}(undef, n)
-    B = Vector{Vector{Int64}}(undef, n)
+    trimming!(root)
+    A = Vector{Vector{Float64}}(undef, n)
+    B = Vector{Vector{Float64}}(undef, n)
     for i in 1:n
         G = measures(root)
         A[i] = [G[1], G[3]]
@@ -208,3 +210,11 @@ pauli_proj_meas = Dict(
     "MId" => Dict("A" => MId[1],
                   "B" => MId[2])
 )
+
+
+rotaz = Dict("from_Y_to_X" => [measure(operator(rot(σy,σz, -(i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
+    "from_X_to_Y" => [measure(operator(rot(σx,σz, (i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
+    "from_Z_to_X" => [measure(operator(rot(σz,σy, (i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
+    "from_Z_to_Y" => [measure(operator(rot(σz,σx, -(i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
+    "from_X_to_Z" => [measure(operator(rot(σx,σy, -(i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
+    "from_Y_to_Z" => [measure(operator(rot(σy,σx, (i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas]);

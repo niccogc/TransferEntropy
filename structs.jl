@@ -45,7 +45,7 @@ abstract type operators end
 struct density_prob
     prob::Float64
     mat::Matrix{ComplexF64}
-    result::Int64
+    result::Float64
 end
 
 struct pauli_operator <: operators
@@ -63,7 +63,7 @@ end
 struct measure <: operators
     proj::Vector{Matrix{ComplexF64}}
     base::String
-    value::Vector{Int64}
+    value::Vector{Float64}
 end
 
 struct operator <: operators
