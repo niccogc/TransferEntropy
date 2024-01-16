@@ -66,7 +66,7 @@ end
 
 function simulation(Qt::QT_Dynamical_model, n)
     ρ_in = density_matrix(Qt.state)
-    root = create_tree(Qt.operators, ρ_in)
+    root = create_tree(Qt.operators, ρ_in, dummyBinary_tree())
     trimming!(root)
     A = Vector{Vector{Float64}}(undef, n)
     B = Vector{Vector{Float64}}(undef, n)
@@ -149,10 +149,11 @@ pauli_proj_meas = Dict(
                   "B" => MId[2])
 )
 
-nmeas = 30
-rotaz = Dict("from_Y_to_X" => [measure(operator(rot(σy,σz, -(i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
-    "from_X_to_Y" => [measure(operator(rot(σx,σz, (i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
-    "from_Z_to_X" => [measure(operator(rot(σz,σy, (i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
-    "from_Z_to_Y" => [measure(operator(rot(σz,σx, -(i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
-    "from_X_to_Z" => [measure(operator(rot(σx,σy, -(i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
-    "from_Y_to_Z" => [measure(operator(rot(σy,σx, (i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas]);
+function Dict_rot(nmeas, qubit)
+     Dict("from_Y_to_X" => [measure(operator(rot(σy,σz, -(i/nmeas)*π/2), "Z"), qubit, 2) for i in 0:nmeas],
+    "from_X_to_Y" => [measure(operator(rot(σx,σz, (i/nmeas)*π/2), "Z"), qubit, 2) for i in 0:nmeas],
+    "from_Z_to_X" => [measure(operator(rot(σz,σy, (i/nmeas)*π/2), "Z"), qubit, 2) for i in 0:nmeas],
+    "from_Z_to_Y" => [measure(operator(rot(σz,σx, -(i/nmeas)*π/2), "Z"), qubit, 2) for i in 0:nmeas],
+    "from_X_to_Z" => [measure(operator(rot(σx,σy, -(i/nmeas)*π/2), "Z"), qubit, 2) for i in 0:nmeas],
+    "from_Y_to_Z" => [measure(operator(rot(σy,σx, (i/nmeas)*π/2), "Z"), qubit, 2) for i in 0:nmeas]);
+end
