@@ -91,12 +91,13 @@ end
 
 mutable struct Binary_tree <: TreeNode
     idx::Int64
-    parent::Union{TreeNode, Nothing}
+    parent::Union{Binary_tree, Nothing}
     value::density_prob
-    left::Union{TreeNode, Nothing}
-    right::Union{TreeNode, Nothing}
+    children::Array{Union{Binary_tree, Nothing}}
 end
 
 struct Tree
     nodes::Vector{TreeNode}
 end
+
+dummyBinary_tree() = Binary_tree(0, nothing, density_prob(0, Matrix{ComplexF64}(I, 2, 2), 0), [nothing;nothing])

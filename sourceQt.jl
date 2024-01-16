@@ -35,33 +35,33 @@ function pauli_operator(matrix,base)
 end
 
 function measures(root::TreeNode)
-    if root.left === nothing && root.right === nothing
+    if root.children[1] === nothing && root.children[2] === nothing
         return []
     end
-    if root.left === nothing && root.right !== nothing
-        if root.right.value.result == 0
-            return [measures(root.right)...]
+    if root.children[1] === nothing && root.children[2] !== nothing
+        if root.children[2].value.result == 0
+            return [measures(root.children[2])...]
         else
-            return [root.right.value.result; measures(root.right)...]
+            return [root.children[2].value.result; measures(root.children[2])...]
         end
         return
     end
-    if root.right === nothing && root.left !== nothing
-        if root.left.value.result == 0
+    if root.children[2] === nothing && root.children[1] !== nothing
+        if root.children[1].value.result == 0
             
-            return [measures(root.left)...]
+            return [measures(root.children[1])...]
         else
-            return [root.left.value.result; measures(root.left)...]
+            return [root.children[1].value.result; measures(root.children[1])...]
         end
     end
-    if root.left.value.result == 0
+    if root.children[1].value.result == 0
         
-        return [measures(root.left)...]
+        return [measures(root.children[1])...]
     end
-    if root.right.value.result == 0
-        return [measures(root.right)...]
+    if root.children[2].value.result == 0
+        return [measures(root.children[2])...]
     end
-    rand() < root.left.value.prob ? (return[root.left.value.result; measures(root.left)...]) : (return[root.right.value.result; measures(root.right)...])
+    rand() < root.children[1].value.prob ? (return[root.children[1].value.result; measures(root.children[1])...]) : (return[root.children[2].value.result; measures(root.children[2])...])
 end
 
 function simulation(Qt::QT_Dynamical_model, n)
@@ -149,7 +149,7 @@ pauli_proj_meas = Dict(
                   "B" => MId[2])
 )
 
-
+nmeas = 30
 rotaz = Dict("from_Y_to_X" => [measure(operator(rot(σy,σz, -(i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
     "from_X_to_Y" => [measure(operator(rot(σx,σz, (i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
     "from_Z_to_X" => [measure(operator(rot(σz,σy, (i/nmeas)*π/2), "Z"), 1, 2) for i in 0:nmeas],
