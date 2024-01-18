@@ -4,6 +4,10 @@ function density_matrix(state::state_vector)
     return density_matrix(state.vec*state.vec', state.base)
 end
 
+function noisy_density_matrix(state::state_vector, noise::Float64)
+    return density_matrix((1-noise)*(state.vec*state.vec') - noise*Matrix(I,4,4), state.base)
+end
+
 function measure(op::operators, qubit::Int64, nqubit::Int64)
     A = op.evec[1]*op.evec[1]'
     B = op.evec[2]*op.evec[2]'
@@ -62,6 +66,19 @@ function measures(root::TreeNode)
         return [measures(root.children[2])...]
     end
     rand() < root.children[1].value.prob ? (return[root.children[1].value.result; measures(root.children[1])...]) : (return[root.children[2].value.result; measures(root.children[2])...])
+end
+function noisy_simulation(Qt::QT_Dynamical_model, n, noise)
+    ρ_in = noisy_density_matrix(Qt.state, noise)
+    root = create_tree(Qt.operators, ρ_in, dummyBinary_tree())
+    trimming!(root)
+    A = Vector{Vector{Float64}}(undef, n)
+    B = Vector{Vector{Float64}}(undef, n)
+    for i in 1:n
+        G = measures(root)
+        A[i] = [G[1], G[3]]
+        B[i] = [G[2], G[4]]
+    end
+    return A, B
 end
 
 function simulation(Qt::QT_Dynamical_model, n)
