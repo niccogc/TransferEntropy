@@ -97,8 +97,25 @@ end
 
 function rot(rotated::operators,rotator::pauli_operator, θ)
     A = (cos(θ/2)*Matrix(I, 2, 2) - im*sin(θ/2)*rotator.mat)*rotated.mat*(cos(θ/2)*Matrix(I, 2, 2) + im*sin(θ/2)*rotator.mat)
-    A[abs.(A) .< 1e-10] .= 0
-    return A
+    B = real.(A)
+    C = imag.(A)
+    B[abs.(B) .< 1e-10] .= 0
+    C[abs.(C) .< 1e-10] .= 0
+    return B + im*C
+end
+
+function spherical_point(θ,ϕ)
+    A = sin(θ)*cos(ϕ)*σx.mat + sin(θ)*sin(ϕ)*σy.mat + cos(θ)*σz.mat
+    B = real.(A)
+    C = imag.(A)
+    B[abs.(B) .< 1e-10] .= 0
+    C[abs.(C) .< 1e-10] .= 0
+    return B + im*C
+end
+
+function spherical_eigen(θ,ϕ, eigen)
+    y = cos(θ)/sqrt(2*(1+ eigen*sin(θ)))
+    return [y*((sin(θ) + eigen)/cos(θ))*exp(-im*ϕ); y]
 end
 
 
