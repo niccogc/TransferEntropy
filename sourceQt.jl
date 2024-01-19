@@ -5,7 +5,7 @@ function density_matrix(state::state_vector)
 end
 
 function noisy_density_matrix(state::state_vector, noise::Float64)
-    return density_matrix((1-noise)*(state.vec*state.vec') - noise*Matrix(I,4,4), state.base)
+    return density_matrix(((1-noise)*(state.vec*state.vec') + (noise/4)*Matrix(I,4,4)), state.base)
 end
 
 function measure(op::operators, qubit::Int64, nqubit::Int64)
