@@ -28,13 +28,13 @@ end
 function operator(matrix, base)
     evals, evecs = eigen(matrix)
     eva = round.(evals)
-    eve = [evecs[i,:] for i in 1:size(evecs)[1]]
+    eve = [evecs[:,i] for i in 1:size(evecs)[2]]
     return operator(matrix, base, eve, eva)
 end
 
 function pauli_operator(matrix,base)
     evals, evecs = eigen(matrix)
-    eve = [evecs[i,:] for i in 1:size(evecs)[1]]
+    eve = [evecs[:,i] for i in 1:size(evecs)[2]]
     return pauli_operator(matrix, base, eve, evals)
 end
 
@@ -113,11 +113,80 @@ function spherical_point(θ,ϕ)
     return B + im*C
 end
 
-function spherical_eigen(θ,ϕ, eigen)
-    y = cos(θ)/sqrt(2*(1+ eigen*sin(θ)))
-    return [y*((sin(θ) + eigen)/cos(θ))*exp(-im*ϕ); y]
+function projector(θ, ϕ, eig, qubit)
+    if qubit == 1
+        return kron((Matrix(I,2,2) +eig.*spherical_point(θ,ϕ))./2,Matrix(I,2,2))
+    end
+    if qubit == 2
+        return kron(Matrix(I,2,2),(Matrix(I,2,2) +eig.*spherical_point(θ,ϕ))./2)
+    end
+    if qubit == 0
+        return (Matrix(I,2,2) +eig.*spherical_point(θ,ϕ))./2
+    end
 end
 
+function qtfullprob(pa,pbone,pbtwo,ρ,ch)
+    A = pa*pbone
+    return tr(pbtwo*ch*A*ρ*A*adjoint(ch))
+end
+
+function qtnumlog(pa,pbone,ρ, prob)
+    return prob/(tr(pbone*pa*ρ))
+end
+
+function qtdenlog(mone,pbone,pbtwo,ρ, ch)
+    A = pbtwo*ch*pbone
+    B = pbone*adjoint(ch)
+    a = tr(A*ρ*B)/2
+    b = tr(A*mone*ρ*mone*B)/2
+    c = tr(pbone*ρ)
+    return (a+b)/c
+end
+
+function qtanTEsum(ma, pa,pbone,pbtwo,ρ,ch)
+    prob = qtfullprob(pa, pbone, pbtwo, ρ, ch)
+    if prob == 0
+        return 0
+    end
+    return prob*log2(qtnumlog(pa, pbone, ρ, prob)/qtdenlog(ma, pbone, pbtwo, ρ, ch))
+end
+
+function qtTEan(α,βone,βtwo,ρ,ch)
+    Pa = [projector(α..., i, 1) for i in [-1,1]]
+    Pbone = [projector(βone..., i, 2) for i in [-1,1]]
+    Pbtwo = [projector(βtwo..., i, 2) for i in [-1,1]]
+    Ma = kron(spherical_point(α...),Matrix(I,2,2))
+    sum = 0
+    for i in Pa
+        for j in Pbone
+            for k in Pbtwo
+                sum += real(qtanTEsum(Ma, i, j, k, ρ, ch))
+            end
+        end
+    end
+    return round(sum, digits = 4)
+end
+
+function Kraussdec(λone,λtwo,λthree)
+    A = λone*kron(σx.mat,σx.mat)+λtwo*kron(σy.mat,σy.mat)+λthree*kron(σz.mat,σz.mat)
+    return exp(-im*A)
+end
+
+function dmatrix(ϕ,base)
+    vec = cos(ϕ)*base[1] + sin(ϕ)*base[2]
+    return vec*vec'
+end
+
+function generaldm_qtTEan(α,βone,βtwo,ϕ,ch,base)
+    ρ = dmatrix(ϕ,base)
+    return qtTEan(α,βone,βtwo,ρ,ch)
+end
+
+function general_qtTEan(α,βone,βtwo,ϕ,λ,base)
+    ch = Kraussdec(λ...)
+    ρ = dmatrix(ϕ,base)
+    return qtTEan(α,βone,βtwo,ρ,ch)
+end
 
 σx = pauli_operator([0 1; 1 0], "Z")
 σy = pauli_operator([0 -im; im 0], "Z")

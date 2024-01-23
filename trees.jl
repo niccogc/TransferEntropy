@@ -32,7 +32,7 @@ end
 function operation(nod::Binary_tree, Circuit, branch)
     if typeof(Circuit[1]) == measure
         A = Circuit[1].proj[branch]*nod.value.mat*Circuit[1].proj[branch]
-        pA = tr(A)
+        pA = real(tr(A))
         if pA == 0
             node = Binary_tree(nod.idx*2+(branch-1), nod, density_prob(pA, zero(A), 0), [nothing; nothing])
         else
