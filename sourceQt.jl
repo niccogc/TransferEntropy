@@ -188,6 +188,12 @@ function general_qtTEan(α,βone,βtwo,ϕ,λ,base)
     return qtTEan(α,βone,βtwo,ρ,ch)
 end
 
+function Haar_rand_channel(n)
+    A = randn(ComplexF64, n, n)
+    Q,R = qr(A)
+    return Q*Diagonal(R./abs.(R))
+end
+
 σx = pauli_operator([0 1; 1 0], "Z")
 σy = pauli_operator([0 -im; im 0], "Z")
 σz = pauli_operator([1 0; 0 -1], "Z")
