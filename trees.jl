@@ -44,47 +44,6 @@ function operation(nod::Binary_tree, Circuit, branch)
     end
 end
 
-#=
-
-function attach_node_left(meas::Vector{operators}, idx, mat, nod)
-    length(meas) == 0 && return nothing
-    node = node_operator(meas[1], idx, mat, nod, 1)
-    node.children[1] = attach_node_left(meas[2:end], node.idx, node.value.mat, node)
-    node.children[2] = attach_node_right(meas[2:end], node.idx, node.value.mat, node)
-    return node
-end
-
-function attach_node_right(meas::Vector{operators}, idx, mat, nod)
-    length(meas) == 0 && return nothing
-    node = node_operator(meas[1], idx, mat, nod, 2)
-    node.children[1] = attach_node_left(meas[2:end], node.idx, node.value.mat, node)
-    node.children[2] = attach_node_right(meas[2:end], node.idx, node.value.mat, node)
-    return node
-end
-
-function node_operator(measure::measure, idx, mat, nod, branch)
-    A = measure.proj[branch]*mat*measure.proj[branch]
-    pA = tr(A)
-    if pA == 0
-        node = Binary_tree(idx*2+(branch-1), nod, density_prob(pA, zero(A), 0), nothing, nothing)
-    else
-        node = Binary_tree(idx*2+(branch-1), nod, density_prob(pA, A./pA, measure.value[branch]), nothing, nothing)
-    end
-    return node
-end
-
-function node_operator(chan::channel, idx, mat, nod, branch)
-    return Binary_tree(idx*2 +(branch-1), nod, density_prob(branch-1, chan.mat*mat*adjoint(chan.mat), 0), nothing, nothing)
-end
-
-function create_tree(meas::Vector{operators}, density_mat::density_matrix; start = 1, parent = nothing, prob = 1, res = 0)
-    root = Binary_tree(start, parent, density_prob(prob, density_mat.mat, res), nothing, nothing)
-    root.children[1] = attach_node_left(meas, root.idx, root.value.mat, root)
-    root.children[2] = attach_node_right(meas, root.idx, root.value.mat, root)
-    return root
-end
-=#
-
 function trimming!(root::Binary_tree)
     if root === nothing
         return
